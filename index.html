@@ -4,18 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <!-- PWA -->
+    <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#F8C8DC" />
+
+    <!-- PWA Metadata -->
+    <meta name="application-name" content="Dampingcare" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Dampingcare" />
-    <link rel="apple-touch-icon" href="/cropped_circle_image_(1).webp" />
+    <meta name="theme-color" content="#FB5EA8" />
+    <meta name="background-color" content="#FFFFFF" />
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
 
     <!-- SEO / Social -->
     <title>Dampingcare</title>
-    <meta name="description" content="Silakan masuk untuk mengakses seluruh layanan Dampingcare." />
+    <meta name="description" content="Professional patient companion and non-medical caregiving services." />
 
     <!-- Poppins font -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -29,7 +40,21 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js');
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (
+                    newWorker.state === 'installed' &&
+                    navigator.serviceWorker.controller
+                  ) {
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  }
+                });
+              }
+            });
+          });
         });
       }
     </script>

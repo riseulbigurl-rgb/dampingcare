@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import InstallPrompt from './InstallPrompt';
 
 const REDIRECT_URL =
   'https://p.me-page.com/d6edd2a7b45865ca5c80521f04ca58ec/Dampingcareoncall';
@@ -82,6 +83,8 @@ export default function App() {
         className="absolute bottom-0 left-0 right-0 h-1"
         style={{ background: 'linear-gradient(90deg, #FDEAF2 0%, #F8C8DC 100%)' }}
       />
+
+      <InstallPrompt />
     </div>
   );
 }
