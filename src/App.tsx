@@ -14,12 +14,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12 font-poppins select-none">
-      {/* Decorative top accent */}
-      <div
-        className="absolute top-0 left-0 right-0 h-1"
-        style={{ background: 'linear-gradient(90deg, #F8C8DC 0%, #FDEAF2 100%)' }}
-      />
-
       {/* Card */}
       <div className="w-full max-w-sm flex flex-col items-center gap-8">
 
@@ -80,12 +74,6 @@ export default function App() {
           &copy; {new Date().getFullYear()} Dampingcare. All rights reserved.
         </p>
       </div>
-
-      {/* Decorative bottom accent */}
-      <div
-        className="absolute bottom-0 left-0 right-0 h-1"
-        style={{ background: 'linear-gradient(90deg, #FDEAF2 0%, #F8C8DC 100%)' }}
-      />
 
     </div>
   );
