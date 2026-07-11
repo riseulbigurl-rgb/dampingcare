@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Info,
+  Apple,
 } from 'lucide-react';
 
 type BeforeInstallPromptEvent = Event & {
@@ -22,7 +23,6 @@ function isStandalone() {
 
 function detectPlatform(): {
   os: 'android' | 'ios' | 'other';
-  browser: 'chrome' | 'samsung' | 'edge' | 'brave' | 'firefox' | 'safari' | 'other';
 } {
   const ua = navigator.userAgent.toLowerCase();
   const os: 'android' | 'ios' | 'other' = /android/.test(ua)
@@ -30,27 +30,20 @@ function detectPlatform(): {
     : /iphone|ipad|ipod/.test(ua)
       ? 'ios'
       : 'other';
-
-  let browser: 'chrome' | 'samsung' | 'edge' | 'brave' | 'firefox' | 'safari' | 'other' = 'other';
-  if (/samsungbrowser/.test(ua)) browser = 'samsung';
-  else if (/edg\//.test(ua)) browser = 'edge';
-  else if (/firefox/.test(ua)) browser = 'firefox';
-  else if (/crios/.test(ua)) browser = 'chrome';
-  else if (/chrome/.test(ua)) browser = 'chrome';
-  else if (/safari/.test(ua)) browser = 'safari';
-  if (navigator.brave !== undefined) browser = 'brave';
-
-  return { os, browser };
+  return { os };
 }
 
+const APK_URL = 'https://dampingcare.com/latest.apk';
+
 export default function InstallSection() {
-  const { os, browser } = detectPlatform();
+  const { os } = detectPlatform();
 
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [pwaSupported, setPwaSupported] = useState<boolean | null>(null);
   const [pwaInstalled, setPwaInstalled] = useState(isStandalone());
 
-  const [showInstructions, setShowInstructions] = useState(false);
+  const [apkState, setApkState] = useState<'idle' | 'downloading' | 'done'>('idle');
+  const [showIosInstructions, setShowIosInstructions] = useState(false);
 
   useEffect(() => {
     if (pwaInstalled) return;
@@ -89,46 +82,32 @@ export default function InstallSection() {
     setPwaSupported(false);
   }
 
-  function getInstructions(): string[] {
-    if (os === 'ios') {
-      if (browser === 'chrome') {
-        return [
-          'iOS does not support native PWA installation from Chrome.',
-          'Open this page in Safari to install Dampingcare.',
-          'In Safari: tap the Share icon, then "Add to Home Screen", then "Add".',
-        ];
-      }
-      return [
-        'Tap the Share button at the bottom of the browser.',
-        'Select "Add to Home Screen".',
-        'Tap "Add" to install Dampingcare on your home screen.',
-      ];
-    }
-
-    switch (browser) {
-      case 'chrome':
-        return ['Tap the menu icon (⋮) in the top right.', 'Select "Install App".'];
-      case 'samsung':
-        return ['Tap the menu icon (≡).', 'Tap "Add page to", then "Home Screen".'];
-      case 'edge':
-        return ['Tap the menu icon (⋯).', 'Go to "Apps", then "Install this site as an app".'];
-      case 'brave':
-        return ['Tap the menu icon (⋮).', 'Select "Install App".'];
-      case 'firefox':
-        return [
-          'Tap the menu icon (⋮).',
-          'Look for "Add to Home Screen" or "Install".',
-          'If unavailable, use the "Add to Home Screen" option from the page menu.',
-        ];
-      default:
-        return [
-          'Open your browser menu.',
-          'Look for "Install App" or "Add to Home Screen".',
-        ];
-    }
+  function handleDownloadApk() {
+    setApkState('downloading');
+    const link = document.createElement('a');
+    link.href = APK_URL;
+    link.download = 'Dampingcare.apk';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => setApkState('done'), 1500);
   }
 
-  const instructions = getInstructions();
+  const apkSteps = [
+    'Buka file APK yang telah selesai diunduh.',
+    'Jika muncul peringatan keamanan, pilih Izinkan instalasi dari sumber ini.',
+    'Tekan Instal.',
+    'Tunggu hingga proses selesai.',
+    'Buka aplikasi Dampingcare.',
+  ];
+
+  const iosSteps = [
+    'Buka website menggunakan Safari.',
+    'Ketuk tombol Bagikan (Share).',
+    'Pilih Add to Home Screen (Tambahkan ke Layar Utama).',
+    'Ketuk Add (Tambah).',
+    'Aplikasi Dampingcare akan muncul di layar utama seperti aplikasi biasa.',
+  ];
 
   return (
     <div
@@ -147,12 +126,82 @@ export default function InstallSection() {
           className="text-xs"
           style={{ color: '#9CA3AF', fontFamily: 'Poppins, sans-serif' }}
         >
-          Choose one of the installation methods below.
+          Pilih salah satu metode instalasi di bawah ini.
         </p>
       </div>
 
       <div className="flex flex-col gap-3">
-        {/* METHOD 1 — Install Instantly (PWA) */}
+        {/* METODE 1 — Download APK (Android) */}
+        {os === 'android' && (
+          <div className="rounded-2xl border border-gray-100 p-4 transition-colors hover:border-pink-100">
+            <div className="flex items-start gap-3">
+              <div
+                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: '#FCE7F3' }}
+              >
+                <Download size={20} style={{ color: '#FB5EA8' }} strokeWidth={2.5} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3
+                  className="text-sm font-semibold"
+                  style={{ color: '#2D2D2D', fontFamily: 'Poppins, sans-serif' }}
+                >
+                  Download APK
+                </h3>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: '#6B7280', fontFamily: 'Poppins, sans-serif' }}
+                >
+                  Unduh aplikasi Dampingcare (.apk) untuk perangkat Android.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleDownloadApk}
+              disabled={apkState === 'downloading'}
+              className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-full text-white font-semibold text-sm transition-all duration-200 active:scale-95 disabled:opacity-70"
+              style={{
+                fontFamily: 'Poppins, sans-serif',
+                backgroundColor: '#FB5EA8',
+                boxShadow: '0 3px 10px rgba(251, 94, 168, 0.3)',
+              }}
+            >
+              <Download size={16} strokeWidth={2.5} />
+              {apkState === 'downloading' ? 'Mengunduh...' : 'Download APK'}
+            </button>
+            {apkState === 'done' && (
+              <div
+                className="mt-3 rounded-xl p-4 flex flex-col gap-2"
+                style={{ backgroundColor: '#FDF2F8' }}
+              >
+                <p
+                  className="text-xs font-semibold mb-1"
+                  style={{ color: '#FB5EA8', fontFamily: 'Poppins, sans-serif' }}
+                >
+                  Cara Instal APK
+                </p>
+                {apkSteps.map((step, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span
+                      className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                      style={{ backgroundColor: '#FB5EA8', color: '#FFFFFF', fontFamily: 'Poppins, sans-serif' }}
+                    >
+                      {i + 1}
+                    </span>
+                    <p
+                      className="text-xs pt-0.5"
+                      style={{ color: '#2D2D2D', fontFamily: 'Poppins, sans-serif' }}
+                    >
+                      {step}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* METODE 2 — Install Langsung (PWA) */}
         {pwaInstalled ? null : (
           <div className="rounded-2xl border border-gray-100 p-4 transition-colors hover:border-pink-100">
             <div className="flex items-start gap-3">
@@ -167,13 +216,13 @@ export default function InstallSection() {
                   className="text-sm font-semibold"
                   style={{ color: '#2D2D2D', fontFamily: 'Poppins, sans-serif' }}
                 >
-                  Install Instantly
+                  Install Dampingcare
                 </h3>
                 <p
                   className="text-xs mt-0.5"
                   style={{ color: '#6B7280', fontFamily: 'Poppins, sans-serif' }}
                 >
-                  Install Dampingcare directly using Progressive Web App (PWA).
+                  Pasang aplikasi langsung tanpa perlu mengunduh APK (jika perangkat mendukung).
                 </p>
               </div>
             </div>
@@ -193,47 +242,68 @@ export default function InstallSection() {
               </button>
             ) : pwaSupported === false ? (
               <div
-                className="mt-3 flex items-start gap-2 rounded-xl p-3"
-                style={{ backgroundColor: '#F9FAFB' }}
+                className="mt-3 rounded-xl p-4 flex flex-col gap-2"
+                style={{ backgroundColor: '#FDF2F8' }}
               >
-                <Info size={16} className="flex-shrink-0 mt-0.5" style={{ color: '#9CA3AF' }} />
                 <p
-                  className="text-xs"
-                  style={{ color: '#6B7280', fontFamily: 'Poppins, sans-serif' }}
+                  className="text-xs font-semibold mb-1"
+                  style={{ color: '#FB5EA8', fontFamily: 'Poppins, sans-serif' }}
                 >
-                  Instant PWA installation isn't available in this browser. Use "Add to Home Screen" below instead.
+                  Cara Instal
                 </p>
+                <div className="flex items-start gap-2">
+                  <span
+                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ backgroundColor: '#FB5EA8', color: '#FFFFFF', fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    1
+                  </span>
+                  <p
+                    className="text-xs pt-0.5"
+                    style={{ color: '#2D2D2D', fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    Tambahkan ke Layar Utama.
+                  </p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span
+                    className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                    style={{ backgroundColor: '#FB5EA8', color: '#FFFFFF', fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    2
+                  </span>
+                  <p
+                    className="text-xs pt-0.5"
+                    style={{ color: '#2D2D2D', fontFamily: 'Poppins, sans-serif' }}
+                  >
+                    Install Aplikasi.
+                  </p>
+                </div>
               </div>
             ) : null}
           </div>
         )}
 
-        {/* METHOD 2 — Add to Home Screen */}
+        {/* METODE 3 — iPhone / iPad */}
         <div className="rounded-2xl border border-gray-100 p-4 transition-colors hover:border-pink-100">
           <div className="flex items-start gap-3">
             <div
               className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
               style={{ backgroundColor: '#FCE7F3' }}
             >
-              <Share size={20} style={{ color: '#FB5EA8' }} strokeWidth={2.5} />
+              <Apple size={20} style={{ color: '#FB5EA8' }} strokeWidth={2.5} />
             </div>
             <div className="flex-1 min-w-0">
               <h3
                 className="text-sm font-semibold"
                 style={{ color: '#2D2D2D', fontFamily: 'Poppins, sans-serif' }}
               >
-                Add to Home Screen
+                iPhone / iPad
               </h3>
-              <p
-                className="text-xs mt-0.5"
-                style={{ color: '#6B7280', fontFamily: 'Poppins, sans-serif' }}
-              >
-                Install using your browser.
-              </p>
             </div>
           </div>
           <button
-            onClick={() => setShowInstructions((v) => !v)}
+            onClick={() => setShowIosInstructions((v) => !v)}
             className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 active:scale-95"
             style={{
               fontFamily: 'Poppins, sans-serif',
@@ -241,10 +311,10 @@ export default function InstallSection() {
               color: '#FB5EA8',
             }}
           >
-            {showInstructions ? 'Hide Instructions' : 'Show Instructions'}
-            {showInstructions ? <ChevronUp size={16} strokeWidth={2.5} /> : <ChevronDown size={16} strokeWidth={2.5} />}
+            {showIosInstructions ? 'Sembunyikan Panduan' : 'Cara Install di iPhone'}
+            {showIosInstructions ? <ChevronUp size={16} strokeWidth={2.5} /> : <ChevronDown size={16} strokeWidth={2.5} />}
           </button>
-          {showInstructions && (
+          {showIosInstructions && (
             <div
               className="mt-3 rounded-xl p-4 flex flex-col gap-2"
               style={{ backgroundColor: '#FDF2F8' }}
@@ -253,13 +323,9 @@ export default function InstallSection() {
                 className="text-xs font-semibold mb-1"
                 style={{ color: '#FB5EA8', fontFamily: 'Poppins, sans-serif' }}
               >
-                {os === 'ios'
-                  ? browser === 'chrome'
-                    ? 'Chrome on iPhone'
-                    : 'Safari iPhone/iPad'
-                  : browser.charAt(0).toUpperCase() + browser.slice(1) + ' on Android'}
+                Cara Install di iPhone / iPad
               </p>
-              {instructions.map((step, i) => (
+              {iosSteps.map((step, i) => (
                 <div key={i} className="flex items-start gap-2">
                   <span
                     className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
