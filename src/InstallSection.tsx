@@ -5,9 +5,7 @@ import {
   Share,
   ChevronDown,
   ChevronUp,
-  CheckCircle2,
   Info,
-  ShieldAlert,
 } from 'lucide-react';
 
 type BeforeInstallPromptEvent = Event & {
@@ -45,8 +43,6 @@ function detectPlatform(): {
   return { os, browser };
 }
 
-const APK_URL = 'https://dampingcare.com/latest.apk';
-
 export default function InstallSection() {
   const { os, browser } = detectPlatform();
 
@@ -54,7 +50,6 @@ export default function InstallSection() {
   const [pwaSupported, setPwaSupported] = useState<boolean | null>(null);
   const [pwaInstalled, setPwaInstalled] = useState(isStandalone());
 
-  const [apkState, setApkState] = useState<'idle' | 'downloading' | 'done'>('idle');
   const [showInstructions, setShowInstructions] = useState(false);
 
   useEffect(() => {
@@ -92,17 +87,6 @@ export default function InstallSection() {
     await installEvent.userChoice;
     setInstallEvent(null);
     setPwaSupported(false);
-  }
-
-  function handleDownloadApk() {
-    setApkState('downloading');
-    const link = document.createElement('a');
-    link.href = APK_URL;
-    link.download = 'Dampingcare.apk';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.setTimeout(() => setApkState('done'), 1500);
   }
 
   function getInstructions(): string[] {
@@ -168,76 +152,7 @@ export default function InstallSection() {
       </div>
 
       <div className="flex flex-col gap-3">
-        {/* METHOD 1 — Download APK */}
-        {os === 'android' && (
-          <div className="rounded-2xl border border-gray-100 p-4 transition-colors hover:border-pink-100">
-            <div className="flex items-start gap-3">
-              <div
-                className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{ backgroundColor: '#FCE7F3' }}
-              >
-                <Download size={20} style={{ color: '#FB5EA8' }} strokeWidth={2.5} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3
-                  className="text-sm font-semibold"
-                  style={{ color: '#2D2D2D', fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Download APK
-                </h3>
-                <p
-                  className="text-xs mt-0.5"
-                  style={{ color: '#6B7280', fontFamily: 'Poppins, sans-serif' }}
-                >
-                  Download the latest Dampingcare Android application (.apk).
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleDownloadApk}
-              disabled={apkState === 'downloading'}
-              className="w-full mt-3 flex items-center justify-center gap-2 py-2.5 rounded-full text-white font-semibold text-sm transition-all duration-200 active:scale-95 disabled:opacity-70"
-              style={{
-                fontFamily: 'Poppins, sans-serif',
-                backgroundColor: '#FB5EA8',
-                boxShadow: '0 3px 10px rgba(251, 94, 168, 0.3)',
-              }}
-            >
-              <Download size={16} strokeWidth={2.5} />
-              {apkState === 'downloading' ? 'Downloading...' : 'Download APK'}
-            </button>
-            {apkState === 'done' && (
-              <div className="mt-3 flex flex-col gap-2">
-                <div
-                  className="flex items-start gap-2 rounded-xl p-3"
-                  style={{ backgroundColor: '#F0FDF4' }}
-                >
-                  <CheckCircle2 size={16} className="flex-shrink-0 mt-0.5" style={{ color: '#16A34A' }} />
-                  <p
-                    className="text-xs"
-                    style={{ color: '#15803D', fontFamily: 'Poppins, sans-serif' }}
-                  >
-                    Open the downloaded APK file and complete the installation.
-                  </p>
-                </div>
-                <div
-                  className="flex items-start gap-2 rounded-xl p-3"
-                  style={{ backgroundColor: '#FFF7ED' }}
-                >
-                  <ShieldAlert size={16} className="flex-shrink-0 mt-0.5" style={{ color: '#EA580C' }} />
-                  <p
-                    className="text-xs"
-                    style={{ color: '#C2410C', fontFamily: 'Poppins, sans-serif' }}
-                  >
-                    If Android blocks installation, go to Settings → Security → Allow installation from this source.
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* METHOD 2 — Install Instantly (PWA) */}
+        {/* METHOD 1 — Install Instantly (PWA) */}
         {pwaInstalled ? null : (
           <div className="rounded-2xl border border-gray-100 p-4 transition-colors hover:border-pink-100">
             <div className="flex items-start gap-3">
@@ -293,7 +208,7 @@ export default function InstallSection() {
           </div>
         )}
 
-        {/* METHOD 3 — Add to Home Screen */}
+        {/* METHOD 2 — Add to Home Screen */}
         <div className="rounded-2xl border border-gray-100 p-4 transition-colors hover:border-pink-100">
           <div className="flex items-start gap-3">
             <div
