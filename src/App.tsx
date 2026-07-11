@@ -1,10 +1,53 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { Download } from 'lucide-react';
 
 const REDIRECT_URL =
   'https://p.me-page.com/d6edd2a7b45865ca5c80521f04ca58ec/Dampingcareoncall';
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+};
+
+function isStandalone() {
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (navigator as Navigator & { standalone?: boolean }).standalone === true
+  );
+}
+
 export default function App() {
   const [pressed, setPressed] = useState(false);
+  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [showInstall, setShowInstall] = useState(false);
+
+  useEffect(() => {
+    if (isStandalone()) return;
+
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setInstallEvent(e as BeforeInstallPromptEvent);
+      setShowInstall(true);
+    };
+
+    const installedHandler = () => setShowInstall(false);
+
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', installedHandler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
+  }, []);
+
+  async function handleInstall() {
+    if (!installEvent) return;
+    await installEvent.prompt();
+    await installEvent.userChoice;
+    setInstallEvent(null);
+    setShowInstall(false);
+  }
 
   function handleRedirect() {
     setPressed(true);
@@ -31,6 +74,22 @@ export default function App() {
             draggable={false}
           />
         </div>
+
+        {/* Install button */}
+        {showInstall && (
+          <button
+            onClick={handleInstall}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-full text-white font-semibold text-base shadow-md transition-all duration-200 active:scale-95 focus:outline-none"
+            style={{
+              fontFamily: 'Poppins, sans-serif',
+              backgroundColor: '#FB5EA8',
+              boxShadow: '0 4px 14px rgba(251, 94, 168, 0.35)',
+            }}
+          >
+            <Download size={20} strokeWidth={2.5} />
+            Install Dampingcare
+          </button>
+        )}
 
         {/* Text block */}
         <div className="flex flex-col items-center gap-3 text-center">
