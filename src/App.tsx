@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import InstallPrompt from './InstallPrompt';
+import { InstallButton, FloatingInstallButton, ManualInstallHint } from './InstallPrompt';
 
 const REDIRECT_URL =
   'https://p.me-page.com/d6edd2a7b45865ca5c80521f04ca58ec/Dampingcareoncall';
@@ -22,6 +22,8 @@ export default function App() {
 
       {/* Card */}
       <div className="w-full max-w-sm flex flex-col items-center gap-8">
+        {/* Install button */}
+        <InstallButton />
 
         {/* Logo */}
         <div className="flex flex-col items-center gap-0">
@@ -84,7 +86,8 @@ export default function App() {
         style={{ background: 'linear-gradient(90deg, #FDEAF2 0%, #F8C8DC 100%)' }}
       />
 
-      <InstallPrompt />
+      <FloatingInstallButton />
+      <ManualInstallHint />
     </div>
   );
 }

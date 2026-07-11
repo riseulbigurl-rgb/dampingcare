@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
-
-const DISMISS_KEY = 'dampingcare_install_dismissed_at';
-const INSTALLED_KEY = 'dampingcare_installed';
-const DISMISS_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
-const SHOW_DELAY_MS = 4000;
+import { Download, X } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -17,36 +13,29 @@ function isStandalone(): boolean {
   );
 }
 
-export default function InstallPrompt() {
+export type InstallState = 'available' | 'unsupported' | 'installed';
+
+export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
-  const [visible, setVisible] = useState(false);
+  const [state, setState] = useState<InstallState>('unsupported');
 
   useEffect(() => {
     if (isStandalone()) {
-      localStorage.setItem(INSTALLED_KEY, 'true');
+      setState('installed');
       return;
-    }
-
-    if (localStorage.getItem(INSTALLED_KEY) === 'true') return;
-
-    const dismissedAt = localStorage.getItem(DISMISS_KEY);
-    if (dismissedAt) {
-      const elapsed = Date.now() - parseInt(dismissedAt, 10);
-      if (elapsed < DISMISS_DURATION_MS) return;
     }
 
     function handler(e: Event) {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      window.setTimeout(() => setVisible(true), SHOW_DELAY_MS);
+      setState('available');
     }
 
     window.addEventListener('beforeinstallprompt', handler);
 
     function installedHandler() {
-      localStorage.setItem(INSTALLED_KEY, 'true');
-      setVisible(false);
+      setState('installed');
       setDeferredPrompt(null);
     }
 
@@ -58,121 +47,79 @@ export default function InstallPrompt() {
     };
   }, []);
 
-  async function handleInstall() {
+  async function promptInstall() {
     if (!deferredPrompt) return;
     await deferredPrompt.prompt();
     const choice = await deferredPrompt.userChoice;
     if (choice.outcome === 'accepted') {
-      localStorage.setItem(INSTALLED_KEY, 'true');
-      setVisible(false);
+      setState('installed');
       setDeferredPrompt(null);
-    } else {
-      handleDismiss();
     }
   }
 
-  function handleDismiss() {
-    localStorage.setItem(DISMISS_KEY, Date.now().toString());
-    setVisible(false);
-    setDeferredPrompt(null);
-  }
+  return { state, promptInstall };
+}
 
-  if (!visible || !deferredPrompt) return null;
+export function InstallButton() {
+  const { state, promptInstall } = useInstallPrompt();
+  if (state !== 'available') return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] transition-opacity duration-300"
-        style={{ animation: 'fadeIn 0.3s ease' }}
-        onClick={handleDismiss}
-      />
+    <button
+      onClick={promptInstall}
+      className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full font-semibold text-sm text-white transition-all duration-200 active:scale-95 focus:outline-none"
+      style={{
+        background: '#FB5EA8',
+        boxShadow: '0 4px 16px rgba(251,94,168,0.35)',
+        fontFamily: 'Poppins, sans-serif',
+      }}
+    >
+      <Download size={18} strokeWidth={2.5} />
+      Install Dampingcare
+    </button>
+  );
+}
 
-      {/* Bottom sheet */}
-      <div
-        className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
-        style={{ animation: 'slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1)' }}
+export function FloatingInstallButton() {
+  const { state, promptInstall } = useInstallPrompt();
+  if (state !== 'available') return null;
+
+  return (
+    <button
+      onClick={promptInstall}
+      aria-label="Install Dampingcare"
+      className="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center text-white transition-all duration-200 active:scale-90 focus:outline-none"
+      style={{
+        background: '#FB5EA8',
+        boxShadow: '0 6px 20px rgba(251,94,168,0.45)',
+      }}
+    >
+      <Download size={24} strokeWidth={2.5} />
+    </button>
+  );
+}
+
+export function ManualInstallHint() {
+  const { state } = useInstallPrompt();
+  const [dismissed, setDismissed] = useState(false);
+  if (state !== 'unsupported' || dismissed) return null;
+
+  return (
+    <div
+      className="fixed bottom-5 right-5 z-40 max-w-xs rounded-2xl bg-white shadow-xl border border-gray-100 p-4 pr-9"
+      style={{ fontFamily: 'Poppins, sans-serif' }}
+    >
+      <button
+        onClick={() => setDismissed(true)}
+        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 transition-colors"
+        aria-label="Close"
       >
-        <div
-          className="w-full max-w-md mx-4 mb-4 rounded-3xl bg-white shadow-2xl overflow-hidden"
-          style={{ fontFamily: 'Poppins, sans-serif' }}
-        >
-          {/* Drag handle */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 rounded-full bg-gray-200" />
-          </div>
-
-          {/* Content */}
-          <div className="px-6 pt-3 pb-6 flex flex-col items-center gap-4">
-            {/* Icon */}
-            <img
-              src="/icon-96.png"
-              alt="Dampingcare"
-              className="w-16 h-16 rounded-2xl shadow-md"
-              draggable={false}
-            />
-
-            {/* Title */}
-            <h2
-              className="text-lg font-bold text-center"
-              style={{ color: '#2D2D2D' }}
-            >
-              Install Dampingcare
-            </h2>
-
-            {/* Description */}
-            <p
-              className="text-sm text-center leading-relaxed"
-              style={{ color: '#6B7280', maxWidth: '300px' }}
-            >
-              Install Dampingcare for faster access, a full-screen experience,
-              and quick access to patient assistance services.
-            </p>
-
-            {/* Buttons */}
-            <div className="w-full flex flex-col gap-3 mt-2">
-              <button
-                onClick={handleInstall}
-                className="w-full py-3.5 rounded-full font-semibold text-base text-white shadow-lg transition-all duration-200 active:scale-95 focus:outline-none"
-                style={{
-                  background: '#FB5EA8',
-                  boxShadow: '0 4px 20px rgba(251,94,168,0.4)',
-                }}
-              >
-                Install Now
-              </button>
-              <button
-                onClick={handleDismiss}
-                className="w-full py-3.5 rounded-full font-semibold text-base transition-all duration-200 active:scale-95 focus:outline-none"
-                style={{
-                  background: '#FDEAF2',
-                  color: '#2D2D2D',
-                }}
-              >
-                Maybe Later
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Animations */}
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-      `}</style>
-    </>
+        <X size={16} />
+      </button>
+      <p className="text-xs leading-relaxed" style={{ color: '#6B7280' }}>
+        Open your browser menu and choose &lsquo;Install App&rsquo; or
+        &lsquo;Add to Home Screen&rsquo;.
+      </p>
+    </div>
   );
 }
