@@ -14,6 +14,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12 font-poppins select-none">
+      {/* SEO: Structured content for search engines */}
+      <noscript>
+        <div style={{ padding: '16px', fontFamily: 'sans-serif', color: '#2D2D2D' }}>
+          <h1>Dampingcare - Jasa Pendamping Pasien & Caregiver Solo Raya & Yogyakarta</h1>
+          <p>
+            Butuh Jasa Teman Pendamping Pasien Saat Sakit di RS, Rumah, atau Kost Area Solo Raya & Yogyakarta?
+            Termasuk pendampingan non-medis ibu pra, saat, & pasca melahirkan, jasa caregiver, pendampingan non-pasien dari bayi hingga lansia, JASTIP (Jasa Titip & Antar ke Tujuan), serta ANJEM (Antar Jemput menggunakan Motor atau Mobil) untuk pasien maupun non-pasien.
+            Melayani Solo Raya (Solo, Karanganyar, Sukoharjo, Boyolali, Sragen, Klaten) & Yogyakarta. Tersedia tim inti perempuan & laki-laki di masing-masing kota.
+            Dampingcare As Your Daily Companion & Kebutuhan Lainnya. Silakan pilih kota yang diinginkan dan hubungi Dampingcare untuk kebutuhan Anda.
+          </p>
+        </div>
+      </noscript>
+
       {/* Card */}
       <div className="w-full max-w-sm flex flex-col items-center gap-8">
 
